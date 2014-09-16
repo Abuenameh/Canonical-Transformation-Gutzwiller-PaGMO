@@ -214,7 +214,9 @@ void phasepoints(Parameter& xi, phase_parameters pparms, queue<Point>& points, /
 
     double theta = pparms.theta;
 
-    double scale = 1;
+        funcdata2 fdata = {U, J, 0, 0};
+
+        double scale = 1;
 
     for (;;) {
         Point point;
@@ -264,25 +266,38 @@ void phasepoints(Parameter& xi, phase_parameters pparms, queue<Point>& points, /
         data.xmin = qwe.data();
 //        data.xmin = vector<double>(ndim);
         
+        nlopt::opt localopt(nlopt::LD_LBFGS, ndim);
+        localopt.set_lower_bounds(-1);
+        localopt.set_upper_bounds(1);
+        localopt.set_min_objective(energyfunc, &fdata);
+        fdata.mu = point.mu/scale;
+        
         vector<double> popx;
         
         de_1220 algo(3000);
-//        gsl_bfgs2 lalgo(100, 1e-8, 1e-8, 0.01, 1e-10);
-        gsl_nm2 lalgo(100, 1e-20);
+        gsl_bfgs2 lalgo(100, 1e-8, 1e-8, 0.01, 1e-10);
+//        gsl_nm2 lalgo(100, 1e-20);
         
         int npop = 20;
         
         energy prob0(ndim, U, J, point.mu/scale, 0);
         population pop0(prob0, npop);
         algo.evolve(pop0);
-//        cout << pop.champion().f << endl;
-        lalgo.evolve(pop0);
+//        cout << pop0.champion().f << endl;
+        
+        double E0 = DBL_MAX;
+        popx = pop0.champion().x;
+        fdata.theta = 0;
+        localopt.optimize(popx, E0);
+//        cout << ::math(E0) << endl;
+        
+//        lalgo.evolve(pop0);
 //        cout << pop0.champion().f << endl;
 //        cout << pop0.champion().x << endl;
         
-        double E0 = pop0.champion().f[0];
+//        double E0 = pop0.champion().f[0];
         
-        popx = pop0.champion().x;
+//        popx = pop0.champion().x;
         norm(popx, norms);
         for (int i = 0; i < L; i++) {
             for (int n = 0; n <= nmax; n++) {
@@ -304,13 +319,20 @@ void phasepoints(Parameter& xi, phase_parameters pparms, queue<Point>& points, /
         population popth(probth, npop);
         algo.evolve(popth);
 //        cout << popth.champion().f << endl;
-        lalgo.evolve(popth);
+
+        double Eth = DBL_MAX;
+        popx = popth.champion().x;
+        fdata.theta = theta;
+        localopt.optimize(popx, Eth);
+//        cout << ::math(Eth) << endl;
+        
+//        lalgo.evolve(popth);
 //        cout << popth.champion().f << endl;
 //        cout << popth.champion().x << endl;
         
-        double Eth = popth.champion().f[0];
+//        double Eth = popth.champion().f[0];
         
-        popx = popth.champion().x;
+//        popx = popth.champion().x;
         norm(popx, norms);
         for (int i = 0; i < L; i++) {
             for (int n = 0; n <= nmax; n++) {
@@ -326,13 +348,20 @@ void phasepoints(Parameter& xi, phase_parameters pparms, queue<Point>& points, /
         population pop2th(prob2th, npop);
         algo.evolve(pop2th);
 //        cout << pop2th.champion().f << endl;
-        lalgo.evolve(pop2th);
+
+        double E2th = DBL_MAX;
+        popx = pop2th.champion().x;
+        fdata.theta = 2*theta;
+        localopt.optimize(popx, E2th);
+//        cout << ::math(E2th) << endl;
+        
+//        lalgo.evolve(pop2th);
 //        cout << pop2th.champion().f << endl;
 //        cout << pop2th.champion().x << endl;
         
-        double E2th = pop2th.champion().f[0];
+//        double E2th = pop2th.champion().f[0];
         
-        popx = pop2th.champion().x;
+//        popx = pop2th.champion().x;
         norm(popx, norms);
         for (int i = 0; i < L; i++) {
             for (int n = 0; n <= nmax; n++) {

@@ -10,7 +10,7 @@ static inline double Sqr(double x) {
     return x * x;
 }
 
-double energyfunc(unsigned ndim, const vector<double> f, vector<double> grad, void *data) {
+double energyfunc(const vector<double>& x, vector<double>& grad, void *data) {
     funcdata2* fdata = static_cast<funcdata2*> (data);
     vector<double>& U = fdata->U;
     vector<double>& J = fdata->J;
@@ -30,9 +30,7 @@ double energyfunc(unsigned ndim, const vector<double> f, vector<double> grad, vo
         f[i] = reinterpret_cast<const doublecomplex*> (&x[2 * i * dim]);
         for (int n = 0; n <= nmax; n++) {
             norm2[i] += norm(f[i][n]);
-//            cout << f[i][n] << " ";
         }
-//        cout << endl;
     }
 
     vector<doublecomplex> E0s(L, 0), E1j1s(L, 0), E1j2s(L, 0),
@@ -190,7 +188,7 @@ double energyfunc(unsigned ndim, const vector<double> f, vector<double> grad, vo
         E5j1k1s[i] += E5j1k1;
         E5j2k2s[i] += E5j2k2;
     }
-    if (grad) {
+    if (!grad.empty()) {
         for (int i = 0; i < L; i++) {
 
             int k1 = mod(i - 2);

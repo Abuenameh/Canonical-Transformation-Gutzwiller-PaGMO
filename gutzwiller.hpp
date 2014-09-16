@@ -107,6 +107,8 @@ inline double eps(vector<double> U, int i, int j, int n, int m) {
 
 double Efunc(unsigned ndim, const double *f, double *grad, void *data);
 
+double energyfunc(const vector<double>& x, vector<double>& grad, void *data);
+
 //double energy(double *f, int ndim, void *data);
 
 class energy : public base {
