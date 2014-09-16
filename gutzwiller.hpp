@@ -25,6 +25,7 @@ typedef complex<double> doublecomplex;
 #define L 5
 #define nmax 7
 #define idim (nmax+1)
+#define dim (nmax+1)
 
 template<class T>
 complex<T> operator~(const complex<T> a) {
