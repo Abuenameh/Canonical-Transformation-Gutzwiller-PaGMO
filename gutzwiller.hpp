@@ -23,7 +23,7 @@ using namespace pagmo::problem;
 typedef complex<double> doublecomplex;
 
 #define L 5
-#define nmax 7
+#define nmax 4
 #define idim (nmax+1)
 #define dim (nmax+1)
 
@@ -69,6 +69,7 @@ struct funcdata2 {
     vector<double>& J;
     double mu;
     double theta;
+    vector<double> Ei;
 };
 
 struct phase_parameters {
@@ -94,7 +95,7 @@ inline double g(int n, int m) {
 extern vector<double> nu;
 
 inline double eps(vector<double> U, int i, int j, int n, int m) {
-	return n * U[i] - (m - 1) * U[j] + nu[i] - nu[j];
+	return n * U[i] - (m - 1) * U[j];
 }
 
 //double Encfunc(unsigned ndim, const double *x, double *grad, void *data);

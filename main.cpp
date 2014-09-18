@@ -214,7 +214,7 @@ void phasepoints(Parameter& xi, phase_parameters pparms, queue<Point>& points, /
 
     double theta = pparms.theta;
 
-        funcdata2 fdata = {U, J, 0, 0};
+        funcdata2 fdata = {U, J, 0, 0, vector<double>(6)};
 
         double scale = 1;
 
@@ -251,6 +251,7 @@ void phasepoints(Parameter& xi, phase_parameters pparms, queue<Point>& points, /
             //            U[i] = 1+0.2*uni(rng);
             //                        J[i] = point.x;
         }
+//        cout << ::math(U) << endl << ::math(J) << endl;
         //        {
         //            boost::mutex::scoped_lock lock(points_mutex);
         //            cout << ::math(U) << endl;
@@ -270,6 +271,10 @@ void phasepoints(Parameter& xi, phase_parameters pparms, queue<Point>& points, /
         localopt.set_lower_bounds(-1);
         localopt.set_upper_bounds(1);
         localopt.set_min_objective(energyfunc, &fdata);
+//        localopt.set_ftol_rel(1e-12);
+//        localopt.set_xtol_rel(1e-12);
+//        localopt.set_ftol_abs(1e-12);
+//        localopt.set_xtol_abs(1e-12);
         fdata.mu = point.mu/scale;
         
         vector<double> popx;
@@ -278,7 +283,7 @@ void phasepoints(Parameter& xi, phase_parameters pparms, queue<Point>& points, /
         gsl_bfgs2 lalgo(100, 1e-8, 1e-8, 0.01, 1e-10);
 //        gsl_nm2 lalgo(100, 1e-20);
         
-        int npop = 20;
+        int npop = 1000;
         
         energy prob0(ndim, U, J, point.mu/scale, 0);
         population pop0(prob0, npop);
@@ -289,6 +294,7 @@ void phasepoints(Parameter& xi, phase_parameters pparms, queue<Point>& points, /
         popx = pop0.champion().x;
         fdata.theta = 0;
         localopt.optimize(popx, E0);
+//        cout << ::math(fdata.Ei) << endl;
 //        cout << ::math(E0) << endl;
         
 //        lalgo.evolve(pop0);
@@ -324,6 +330,7 @@ void phasepoints(Parameter& xi, phase_parameters pparms, queue<Point>& points, /
         popx = popth.champion().x;
         fdata.theta = theta;
         localopt.optimize(popx, Eth);
+//        cout << ::math(fdata.Ei) << endl;
 //        cout << ::math(Eth) << endl;
         
 //        lalgo.evolve(popth);
@@ -353,6 +360,7 @@ void phasepoints(Parameter& xi, phase_parameters pparms, queue<Point>& points, /
         popx = pop2th.champion().x;
         fdata.theta = 2*theta;
         localopt.optimize(popx, E2th);
+//        cout << ::math(fdata.Ei) << endl;
 //        cout << ::math(E2th) << endl;
         
 //        lalgo.evolve(pop2th);
@@ -743,6 +751,40 @@ vector<double> nu;
  *
  */
 int main(int argc, char** argv) {
+
+//    double Jarr[] = {0.156361385726566, 0.158873021202621, 0.158546862649579, \
+//0.150288101696321, 0.146737021383394};
+//    double Uarr[] = {1.06675425238752, 0.697472058368311, 0.847555707339779, \
+//0.729007497875799, 1.49906404251572};
+//    vector<double> J = vector<double>(L);
+//    vector<double> U = vector<double>(L);
+//    for (int i = 0; i < L; i++) {
+////        J[i] = 0.01*i;
+////        U[i] = 1 + 0.1*i;
+//        J[i] = Jarr[i];
+//        U[i] = Uarr[i];
+//    }
+////    funcdata2 parms = {U, J, 0.5, 0.01, vector<double>(6)};
+//    funcdata2 parms = {U, J, 0, 0, vector<double>(6)};
+//    double xarr[] = {0.271841556780473,0.32773307478231,0.620263685951129,0.658761079292957,-5.02045509997817e-11,9.30609333219018e-11,
+//   -4.64368349433475e-10,-1.3135835332481e-10,-1.443474892878e-10,-1.02489488077154e-9,0.304615256224549,0.380178438262588,
+//   0.587804271614508,0.645879275892337,-1.31488907863261e-9,-1.27533107040275e-9,7.70428171523083e-10,2.9287715479026e-10,
+//   -3.53953681196986e-10,-1.11511238203068e-9,0.563276000828406,0.561770868231313,0.455050941852603,0.40007784094655,
+//   -3.73176979067762e-9,-3.02077050961503e-10,4.65648893380262e-10,3.52500471782538e-10,1.27758014186449e-10,2.53644790617447e-11,
+//   -3.97956372343927e-10,-5.94637981846577e-10,-2.19942042687548e-10,-3.68728577410614e-10,6.06470786659714e-11,2.33792954795437e-9,
+//   0.706047945088963,0.708164034130266,7.95812629871954e-10,1.06560669452581e-9,0.0131837149863491,0.015014373474611,0.705571296546575,
+//   0.70835718655062,5.23171525019576e-10,-6.86400086711088e-10,-1.41013460568954e-10,5.05986683534095e-11,-2.74890579705431e-10,
+//   1.33937335928692e-10};
+//    vector<double> xx(2*L*dim);
+//    for(int i = 0; i < 2*L*dim; i++) {
+////        xx[i] = 0.01*i;
+//        xx[i] = xarr[i];
+//    }
+//    vector<double> grad;
+//    double E = energyfunc(xx, grad, &parms);
+//    cout << ::math(E) << endl;
+//    cout << ::math(parms.Ei) << endl;
+//    return 0;
 
     //    cout << ::math(cos(0.1)) << endl;
     //    cout << ::math(exp(doublecomplex(0,1)*0.1).real()) << endl;

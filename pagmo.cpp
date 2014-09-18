@@ -83,7 +83,7 @@ void energy::objfun_impl(fitness_vector& En, const decision_vector& x) const {
         doublecomplex E5j2k2 = 0;
 
         for (int n = 0; n <= nmax; n++) {
-            E0 += (0.5 * U[i] * n * (n - 1) - mu * n + nu[i] * n) * ~f[i][n] * f[i][n];
+            E0 += (0.5 * U[i] * n * (n - 1) - mu * n) * ~f[i][n] * f[i][n];
 
             if (n < nmax) {
                 E1j1 += -J[j1] * expth * g(n, n + 1) * ~f[i][n + 1] * ~f[j1][n]

@@ -17,6 +17,14 @@ double energyfunc(const vector<double>& x, vector<double>& grad, void *data) {
     double mu = fdata->mu;
     double theta = fdata->theta;
 
+    vector<double>& Ei = fdata->Ei;
+    Ei[0] = 0;
+    Ei[1] = 0;
+    Ei[2] = 0;
+    Ei[3] = 0;
+    Ei[4] = 0;
+    Ei[5] = 0;
+
     doublecomplex expth = exp(doublecomplex(0, 1) * theta);
     doublecomplex expmth = exp(-doublecomplex(0, 1) * theta);
     doublecomplex exp2th = exp(doublecomplex(0, 1)*2.0 * theta);
@@ -61,7 +69,7 @@ double energyfunc(const vector<double>& x, vector<double>& grad, void *data) {
         doublecomplex E5j2k2 = 0;
 
         for (int n = 0; n <= nmax; n++) {
-            E0 += (0.5 * U[i] * n * (n - 1) - mu * n + nu[i] * n) * ~f[i][n] * f[i][n];
+            E0 += (0.5 * U[i] * n * (n - 1) - mu * n) * ~f[i][n] * f[i][n];
 
             if (n < nmax) {
                 E1j1 += -J[j1] * expth * g(n, n + 1) * ~f[i][n + 1] * ~f[j1][n]
@@ -151,39 +159,58 @@ double energyfunc(const vector<double>& x, vector<double>& grad, void *data) {
         }
 
         Ec += E0 / norm2[i];
-        
-                Ec += E1j1 / (norm2[i] * norm2[j1]);
-                Ec += E1j2 / (norm2[i] * norm2[j2]);
-                
-                Ec += E2j1 / (norm2[i] * norm2[j1]);
-                Ec += E2j2 / (norm2[i] * norm2[j2]);
-                
-                Ec += E3j1 / (norm2[i] * norm2[j1]);
-                Ec += E3j2 / (norm2[i] * norm2[j2]);
-                
-                Ec += E4j1j2 / (norm2[i] * norm2[j1] * norm2[j2]);
-                Ec += E4j1k1 / (norm2[i] * norm2[j1] * norm2[k1]);
-                Ec += E4j2k2 / (norm2[i] * norm2[j2] * norm2[k2]);
-                
-                Ec += E5j1j2 / (norm2[i] * norm2[j1] * norm2[j2]);
-                Ec += E5j1k1 / (norm2[i] * norm2[j1] * norm2[k1]);
-                Ec += E5j2k2 / (norm2[i] * norm2[j2] * norm2[k2]);
+
+        Ec += E1j1 / (norm2[i] * norm2[j1]);
+        Ec += E1j2 / (norm2[i] * norm2[j2]);
+
+        Ec += E2j1 / (norm2[i] * norm2[j1]);
+        Ec += E2j2 / (norm2[i] * norm2[j2]);
+
+        Ec += E3j1 / (norm2[i] * norm2[j1]);
+        Ec += E3j2 / (norm2[i] * norm2[j2]);
+
+        Ec += E4j1j2 / (norm2[i] * norm2[j1] * norm2[j2]);
+        Ec += E4j1k1 / (norm2[i] * norm2[j1] * norm2[k1]);
+        Ec += E4j2k2 / (norm2[i] * norm2[j2] * norm2[k2]);
+
+        Ec += E5j1j2 / (norm2[i] * norm2[j1] * norm2[j2]);
+        Ec += E5j1k1 / (norm2[i] * norm2[j1] * norm2[k1]);
+        Ec += E5j2k2 / (norm2[i] * norm2[j2] * norm2[k2]);
+
+        Ei[0] += (E0 / norm2[i]).real();
+
+        Ei[1] += (E1j1 / (norm2[i] * norm2[j1])).real();
+        Ei[1] += (E1j2 / (norm2[i] * norm2[j2])).real();
+
+        Ei[2] += (E2j1 / (norm2[i] * norm2[j1])).real();
+        Ei[2] += (E2j2 / (norm2[i] * norm2[j2])).real();
+
+        Ei[3] += (E3j1 / (norm2[i] * norm2[j1])).real();
+        Ei[3] += (E3j2 / (norm2[i] * norm2[j2])).real();
+
+        Ei[4] += (E4j1j2 / (norm2[i] * norm2[j1] * norm2[j2])).real();
+        Ei[4] += (E4j1k1 / (norm2[i] * norm2[j1] * norm2[k1])).real();
+        Ei[4] += (E4j2k2 / (norm2[i] * norm2[j2] * norm2[k2])).real();
+
+        Ei[5] += (E5j1j2 / (norm2[i] * norm2[j1] * norm2[j2])).real();
+        Ei[5] += (E5j1k1 / (norm2[i] * norm2[j1] * norm2[k1])).real();
+        Ei[5] += (E5j2k2 / (norm2[i] * norm2[j2] * norm2[k2])).real();
 
         E0s[i] += E0;
-        
+
         E1j1s[i] += E1j1;
         E1j2s[i] += E1j2;
-        
+
         E2j1s[i] += E2j1;
         E2j2s[i] += E2j2;
-        
+
         E3j1s[i] += E3j1;
         E3j2s[i] += E3j2;
-        
+
         E4j1j2s[i] += E4j1j2;
         E4j1k1s[i] += E4j1k1;
         E4j2k2s[i] += E4j2k2;
-        
+
         E5j1j2s[i] += E5j1j2;
         E5j1k1s[i] += E5j1k1;
         E5j2k2s[i] += E5j2k2;
@@ -472,59 +499,59 @@ double energyfunc(const vector<double>& x, vector<double>& grad, void *data) {
 
                 Edf += (E0df * norm2[i] - E0s[i] * f[i][n]) / (norm2[i] * norm2[i]);
 
-                                Edf += (E1j1df * norm2[i] * norm2[j1]
-                                        - (E1j1s[i] + E1j2s[j1]) * f[i][n] * norm2[j1])
-                                        / (norm2[i] * norm2[i] * norm2[j1] * norm2[j1]);
-                                Edf += (E1j2df * norm2[i] * norm2[j2]
-                                        - (E1j2s[i] + E1j1s[j2]) * f[i][n] * norm2[j2])
-                                        / (norm2[i] * norm2[i] * norm2[j2] * norm2[j2]);
-                
-                                Edf += (E2j1df * norm2[i] * norm2[j1]
-                                        - (E2j1s[i] + E2j2s[j1]) * f[i][n] * norm2[j1])
-                                        / (norm2[i] * norm2[i] * norm2[j1] * norm2[j1]);
-                                Edf += (E2j2df * norm2[i] * norm2[j2]
-                                        - (E2j2s[i] + E2j1s[j2]) * f[i][n] * norm2[j2])
-                                        / (norm2[i] * norm2[i] * norm2[j2] * norm2[j2]);
-                
-                                Edf += (E3j1df * norm2[i] * norm2[j1]
-                                        - (E3j1s[i] + E3j2s[j1]) * f[i][n] * norm2[j1])
-                                        / (norm2[i] * norm2[i] * norm2[j1] * norm2[j1]);
-                                Edf += (E3j2df * norm2[i] * norm2[j2]
-                                        - (E3j2s[i] + E3j1s[j2]) * f[i][n] * norm2[j2])
-                                        / (norm2[i] * norm2[i] * norm2[j2] * norm2[j2]);
-                
-                                Edf += (E4j1j2df * norm2[i] * norm2[j1] * norm2[j2]
-                                        - (E4j1j2s[i] + E4j2k2s[j1] + E4j1k1s[j2]) * f[i][n] * norm2[j1]
-                                        * norm2[j2])
-                                        / (norm2[i] * norm2[i] * norm2[j1] * norm2[j1] * norm2[j2] * norm2[j2]);
-                                Edf += (E4j1k1df * norm2[i] * norm2[j1] * norm2[k1]
-                                        - (E4j1k1s[i] + E4j1j2s[j1] + E4j2k2s[k1]) * f[i][n] * norm2[j1]
-                                        * norm2[k1])
-                                        / (norm2[i] * norm2[i] * norm2[j1] * norm2[j1] * norm2[k1] * norm2[k1]);
-                                Edf += (E4j2k2df * norm2[i] * norm2[j2] * norm2[k2]
-                                        - (E4j2k2s[i] + E4j1j2s[j2] + E4j1k1s[k2]) * f[i][n] * norm2[j2]
-                                        * norm2[k2])
-                                        / (norm2[i] * norm2[i] * norm2[j2] * norm2[j2] * norm2[k2] * norm2[k2]);
-                
-                                Edf += (E5j1j2df * norm2[i] * norm2[j1] * norm2[j2]
-                                        - (E5j1j2s[i] + E5j2k2s[j1] + E5j1k1s[j2]) * f[i][n] * norm2[j1]
-                                        * norm2[j2])
-                                        / (norm2[i] * norm2[i] * norm2[j1] * norm2[j1] * norm2[j2] * norm2[j2]);
-                                Edf += (E5j1k1df * norm2[i] * norm2[j1] * norm2[k1]
-                                        - (E5j1k1s[i] + E5j1j2s[j1] + E5j2k2s[k1]) * f[i][n] * norm2[j1]
-                                        * norm2[k1])
-                                        / (norm2[i] * norm2[i] * norm2[j1] * norm2[j1] * norm2[k1] * norm2[k1]);
-                                Edf += (E5j2k2df * norm2[i] * norm2[j2] * norm2[k2]
-                                        - (E5j2k2s[i] + E5j1j2s[j2] + E5j1k1s[k2]) * f[i][n] * norm2[j2]
-                                        * norm2[k2])
-                                        / (norm2[i] * norm2[i] * norm2[j2] * norm2[j2] * norm2[k2] * norm2[k2]);
+                Edf += (E1j1df * norm2[i] * norm2[j1]
+                        - (E1j1s[i] + E1j2s[j1]) * f[i][n] * norm2[j1])
+                        / (norm2[i] * norm2[i] * norm2[j1] * norm2[j1]);
+                Edf += (E1j2df * norm2[i] * norm2[j2]
+                        - (E1j2s[i] + E1j1s[j2]) * f[i][n] * norm2[j2])
+                        / (norm2[i] * norm2[i] * norm2[j2] * norm2[j2]);
+
+                Edf += (E2j1df * norm2[i] * norm2[j1]
+                        - (E2j1s[i] + E2j2s[j1]) * f[i][n] * norm2[j1])
+                        / (norm2[i] * norm2[i] * norm2[j1] * norm2[j1]);
+                Edf += (E2j2df * norm2[i] * norm2[j2]
+                        - (E2j2s[i] + E2j1s[j2]) * f[i][n] * norm2[j2])
+                        / (norm2[i] * norm2[i] * norm2[j2] * norm2[j2]);
+
+                Edf += (E3j1df * norm2[i] * norm2[j1]
+                        - (E3j1s[i] + E3j2s[j1]) * f[i][n] * norm2[j1])
+                        / (norm2[i] * norm2[i] * norm2[j1] * norm2[j1]);
+                Edf += (E3j2df * norm2[i] * norm2[j2]
+                        - (E3j2s[i] + E3j1s[j2]) * f[i][n] * norm2[j2])
+                        / (norm2[i] * norm2[i] * norm2[j2] * norm2[j2]);
+
+                Edf += (E4j1j2df * norm2[i] * norm2[j1] * norm2[j2]
+                        - (E4j1j2s[i] + E4j2k2s[j1] + E4j1k1s[j2]) * f[i][n] * norm2[j1]
+                        * norm2[j2])
+                        / (norm2[i] * norm2[i] * norm2[j1] * norm2[j1] * norm2[j2] * norm2[j2]);
+                Edf += (E4j1k1df * norm2[i] * norm2[j1] * norm2[k1]
+                        - (E4j1k1s[i] + E4j1j2s[j1] + E4j2k2s[k1]) * f[i][n] * norm2[j1]
+                        * norm2[k1])
+                        / (norm2[i] * norm2[i] * norm2[j1] * norm2[j1] * norm2[k1] * norm2[k1]);
+                Edf += (E4j2k2df * norm2[i] * norm2[j2] * norm2[k2]
+                        - (E4j2k2s[i] + E4j1j2s[j2] + E4j1k1s[k2]) * f[i][n] * norm2[j2]
+                        * norm2[k2])
+                        / (norm2[i] * norm2[i] * norm2[j2] * norm2[j2] * norm2[k2] * norm2[k2]);
+
+                Edf += (E5j1j2df * norm2[i] * norm2[j1] * norm2[j2]
+                        - (E5j1j2s[i] + E5j2k2s[j1] + E5j1k1s[j2]) * f[i][n] * norm2[j1]
+                        * norm2[j2])
+                        / (norm2[i] * norm2[i] * norm2[j1] * norm2[j1] * norm2[j2] * norm2[j2]);
+                Edf += (E5j1k1df * norm2[i] * norm2[j1] * norm2[k1]
+                        - (E5j1k1s[i] + E5j1j2s[j1] + E5j2k2s[k1]) * f[i][n] * norm2[j1]
+                        * norm2[k1])
+                        / (norm2[i] * norm2[i] * norm2[j1] * norm2[j1] * norm2[k1] * norm2[k1]);
+                Edf += (E5j2k2df * norm2[i] * norm2[j2] * norm2[k2]
+                        - (E5j2k2s[i] + E5j1j2s[j2] + E5j1k1s[k2]) * f[i][n] * norm2[j2]
+                        * norm2[k2])
+                        / (norm2[i] * norm2[i] * norm2[j2] * norm2[j2] * norm2[k2] * norm2[k2]);
 
                 int k = i * dim + n;
                 grad[2 * k] = 2 * Edf.real();
                 grad[2 * k + 1] = 2 * Edf.imag();
-                
+
             }
         }
     }
-        return Ec.real();
+    return Ec.real();
 }
