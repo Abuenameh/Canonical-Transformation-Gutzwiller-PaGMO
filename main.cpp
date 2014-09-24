@@ -28,7 +28,7 @@
 
 #include <pagmo/src/pagmo.h>
 
-#include <bayesopt/bayesopt.hpp>
+//#include <bayesopt/bayesopt.hpp>
 
 #include "mathematica.hpp"
 #include "gutzwiller.hpp"

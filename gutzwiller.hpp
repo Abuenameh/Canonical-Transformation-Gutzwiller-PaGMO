@@ -20,7 +20,7 @@ using namespace std;
 using namespace pagmo;
 using namespace pagmo::problem;
 
-#include <bayesopt/bayesopt.hpp>
+//#include <bayesopt/bayesopt.hpp>
 
 using namespace boost::numeric;
 
@@ -139,7 +139,7 @@ private:
     double sin2th;
 };
 
-class bayesfunc : public bayesopt::ContinuousModel {
+/*class bayesfunc : public bayesopt::ContinuousModel {
 private:
     funcdata2& data;
 
@@ -152,7 +152,7 @@ public:
     }
 
     virtual double evaluateSample(const vectord& x);
-    };
+    };*/
     
 #endif	/* GUTZWILLER_HPP */
 
