@@ -193,6 +193,8 @@ void energy::objfun_impl(fitness_vector& En, const decision_vector& x) const {
     }
     
     En[0] = Ec.real();
+//    static int count = 0;
+//    cout << count++ << endl;
     
 //#include "vars.cpp"
 //#include "return.cpp"

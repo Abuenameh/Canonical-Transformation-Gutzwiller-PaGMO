@@ -28,6 +28,8 @@
 
 #include <pagmo/src/pagmo.h>
 
+#include <bayesopt/bayesopt.hpp>
+
 #include "mathematica.hpp"
 #include "gutzwiller.hpp"
 
@@ -279,23 +281,63 @@ void phasepoints(Parameter& xi, phase_parameters pparms, queue<Point>& points, /
         
         vector<double> popx;
         
-        de_1220 algo(3000);
+        de_1220 algo(2000);
+//        sa_corana algo(10000, 1000, 0.01, 10, 20);
+//        jde algo(1000,14);
+//        de local(1000);
+//        mbh algo(local);
+//        mde_pbx algo(10000);
+//        sga algo(500);
+//        pso algo(500);
         gsl_bfgs2 lalgo(100, 1e-8, 1e-8, 0.01, 1e-10);
 //        gsl_nm2 lalgo(100, 1e-20);
         
-        int npop = 1000;
+//        bopt_params parms = initialize_parameters_to_default();
+//        parms.kernel.name = "kSum(kMaternISO3,kRQISO)";
+//        parms.kernel.hp_mean[0] = 1;
+//        parms.kernel.hp_mean[1] = 1;
+//        parms.kernel.hp_std[0] = 0.5;
+//        parms.kernel.hp_std[1] = 0.5;
+////        parms.kernel.hp_mean = {1, 1};
+////        parms.kernel.hp_std = {0.5, 0.5};
+//        parms.kernel.n_hp = 2;
+//        parms.crit_name = "cHedge (cEI , cLCB , cThompsonSampling)";
+//        bayesfunc bayes(parms, fdata);
+//        vectord xopt(ndim);
+//        bayes.optimize(xopt);
+//        
+//        double Ebayes = bayes.evaluateSample(xopt);
+//        cout << xopt << endl;
+//        cout << ::math(Ebayes) << endl;
+//        exit(0);
+        
+        int npop = 20;
         
         energy prob0(ndim, U, J, point.mu/scale, 0);
         population pop0(prob0, npop);
         algo.evolve(pop0);
 //        cout << pop0.champion().f << endl;
+//        for(int q = 0; q < 10; q++) {
+//        population pop0(prob0, npop);
+//        algo.evolve(pop0);
+//        cout << pop0.champion().f << endl;
+//        }
+//        cout << pop0.champion().x << endl;
+//        exit(0);
         
         double E0 = DBL_MAX;
         popx = pop0.champion().x;
         fdata.theta = 0;
+        try {
         localopt.optimize(popx, E0);
+        } catch (std::exception& e) {
+            printf("nlopt failed!: E0 refine: %d, %d\n", point.i, point.j);
+            cout << e.what() << endl;
+            E0 = pop0.champion().f[0];
+        }
 //        cout << ::math(fdata.Ei) << endl;
 //        cout << ::math(E0) << endl;
+//        exit(0);
         
 //        lalgo.evolve(pop0);
 //        cout << pop0.champion().f << endl;
@@ -329,7 +371,13 @@ void phasepoints(Parameter& xi, phase_parameters pparms, queue<Point>& points, /
         double Eth = DBL_MAX;
         popx = popth.champion().x;
         fdata.theta = theta;
+        try {
         localopt.optimize(popx, Eth);
+        } catch (std::exception& e) {
+            printf("nlopt failed!: Eth refine: %d, %d\n", point.i, point.j);
+            cout << e.what() << endl;
+            Eth = popth.champion().f[0];
+        }
 //        cout << ::math(fdata.Ei) << endl;
 //        cout << ::math(Eth) << endl;
         
@@ -359,7 +407,13 @@ void phasepoints(Parameter& xi, phase_parameters pparms, queue<Point>& points, /
         double E2th = DBL_MAX;
         popx = pop2th.champion().x;
         fdata.theta = 2*theta;
+        try {
         localopt.optimize(popx, E2th);
+        } catch (std::exception& e) {
+            printf("nlopt failed!: E0 refine: %d, %d\n", point.i, point.j);
+            cout << e.what() << endl;
+            E2th = pop2th.champion().f[0];
+        }
 //        cout << ::math(fdata.Ei) << endl;
 //        cout << ::math(E2th) << endl;
         
@@ -390,7 +444,7 @@ void phasepoints(Parameter& xi, phase_parameters pparms, queue<Point>& points, /
         }
 
         continue;
-        exit(0);
+//        exit(0);
 
 
         //

@@ -20,10 +20,14 @@ using namespace std;
 using namespace pagmo;
 using namespace pagmo::problem;
 
+#include <bayesopt/bayesopt.hpp>
+
+using namespace boost::numeric;
+
 typedef complex<double> doublecomplex;
 
-#define L 5
-#define nmax 4
+#define L 50
+#define nmax 5
 #define idim (nmax+1)
 #define dim (nmax+1)
 
@@ -135,6 +139,20 @@ private:
     double sin2th;
 };
 
+class bayesfunc : public bayesopt::ContinuousModel {
+private:
+    funcdata2& data;
 
+public:
+
+    bayesfunc(bopt_params parm, funcdata2& data_) : ContinuousModel(2 * L*dim, parm), data(data_) {
+        vectord lb = svectord(2*L*dim, -1);
+        vectord ub = svectord(2*L*dim, 1);
+        setBoundingBox(lb, ub);
+    }
+
+    virtual double evaluateSample(const vectord& x);
+    };
+    
 #endif	/* GUTZWILLER_HPP */
 
