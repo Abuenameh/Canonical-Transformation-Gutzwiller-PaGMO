@@ -243,7 +243,8 @@ void phasepoints(Parameter& xi, phase_parameters pparms, queue<Point>& points, /
             //            double Wj = xi[i] * point.x;
 
             U[i] = UW(W[i]) / UW(point.x) / scale;
-            J[i] = JWij(W[i], W[mod(i + 1)]) / UW(point.x) / scale;
+//            U[i] = ((max(UW(W[i]), UW(point.x)) / UW(point.x))+1) / scale;
+            J[i] = /*JWij(point.x,point.x)/UW(point.x);//*/JWij(W[i], W[mod(i + 1)]) / UW(point.x) / scale;
             //            U[i] = 1;
             //            J[i] = JW(point.x)/UW(point.x);
 
@@ -253,7 +254,7 @@ void phasepoints(Parameter& xi, phase_parameters pparms, queue<Point>& points, /
             //            U[i] = 1+0.2*uni(rng);
             //                        J[i] = point.x;
         }
-//        cout << ::math(U) << endl << ::math(J) << endl;
+        cout << ::math(U) << endl << ::math(J) << endl;
         //        {
         //            boost::mutex::scoped_lock lock(points_mutex);
         //            cout << ::math(U) << endl;
