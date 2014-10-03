@@ -102,6 +102,12 @@ inline double eps(vector<double> U, int i, int j, int n, int m) {
 	return n * U[i] - (m - 1) * U[j];
 }
 
+inline double eps(double U, int n, int m) {
+    return (n - m + 1) * U;
+}
+
+//inline double eps(vector<double> U, )
+
 //double Encfunc(unsigned ndim, const double *x, double *grad, void *data);
 //double Ecfunc(unsigned ndim, const double *x, double *grad, void *data);
 //double Ecfunc(int i, unsigned ndim, const double *x, double *grad, void *data);
@@ -118,7 +124,7 @@ double energyfunc(const vector<double>& x, vector<double>& grad, void *data);
 
 class energy : public base {
 public:
-    energy(int n, vector<double>& U_, vector<double>& J_, double mu_, double theta_) : base(n), U(U_), J(J_), mu(mu_), theta(theta_) {
+    energy(int n, double U0_, vector<double>& dU_, vector<double>& U_, vector<double>& J_, double mu_, double theta_) : base(n), U0(U0_), dU(dU_), U(U_), J(J_), mu(mu_), theta(theta_) {
         costh = cos(theta);
         sinth = sin(theta);
         cos2th = cos(2*theta);
@@ -127,8 +133,11 @@ public:
     
     base_ptr clone() const;
     void objfun_impl(fitness_vector& f, const decision_vector& x) const;
+    void objfun_impl2(fitness_vector& f, const decision_vector& x) const;
     
 private:
+    double U0;
+    vector<double>& dU;
     vector<double>& U;
     vector<double>& J;
     double mu;

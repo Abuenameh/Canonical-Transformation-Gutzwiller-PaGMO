@@ -314,7 +314,43 @@ void phasepoints(Parameter& xi, phase_parameters pparms, queue<Point>& points, /
         
         int npop = 20;
         
-        energy prob0(ndim, U, J, point.mu/scale, 0);
+        double U0 = 0.7786907302065487;
+        double Ua[] = {0.922213971320164, 0.856881508533313, 0.700324261083433, \
+0.571208141081931, 0.842825769013902};
+        double dUa[] = {0.14352324111361536, 0.07819077832676435, -0.07836646912311562, \
+-0.2074825891246177, 0.06413503880735338};
+        double Ja[] = {0.07683663838672976, 0.07283001881815312, 0.07694395816589483, \
+0.07347544296692873, 0.0761660621229901};
+//        double Ja[] = {0.07283001881815312, 0.07694395816589483, \
+//0.07347544296692873, 0.0761660621229901,0.07683663838672976};
+        vector<double> dU(5);
+        for(int i = 0; i < 5; i++) {
+            U[i] = Ua[i];
+            dU[i] = dUa[i];
+            J[i] = Ja[i];
+        }
+        
+        energy prob0(ndim, U0, dU, U, J, point.mu/scale, 0);
+        fitness_vector fv(1);
+        decision_vector dv(ndim);
+        double dva[] = {0.12806249101263278, 0, 0.054426358315506206, 0, \
+0.5017203911948146, 0, 0.7032020484792338, 0, 0.4282632265309182, \
+0, 0.22585815635351836, 0, 0.41466066310273253, 0, \
+0.4858208770649655, 0, 0.3909971375850023, 0, 0.38811392766222463, \
+0, 0.5311079401305173, 0, 0.08029809068891339, 0, \
+0.5150540287549862, 0, 0.052190588891518695, 0, \
+0.4211423332437574, 0, 0.6842349703439841, 0, 0.23557373654220737, \
+0, 0.1759606349565957, 0, 0.5699253451548816, 0, \
+0.4367825914524495, 0, 0.33798191844475106, 0, \
+0.47171561640183807, 0, 0.38358047886589935, 0, \
+0.022906004326788187, 0, 0.5226675531791949, 0, \
+0.5421896797766332, 0, 0.5693170132769998, 0, 0.27577384468187405, \
+0, 0.012076767067972723, 0, 0.18036090673232205, 0};
+        for (int i = 0; i < ndim; i++) {
+            dv[i] = dva[i];
+        }
+        prob0.objfun_impl(fv, dv);
+        exit(0);
         population pop0(prob0, npop);
         algo.evolve(pop0);
 //        cout << pop0.champion().f << endl;
@@ -364,7 +400,7 @@ void phasepoints(Parameter& xi, phase_parameters pparms, queue<Point>& points, /
         fres.f0[point.i][point.j] = x0;
         results.E0res[point.i][point.j] = E0;
 
-        energy probth(ndim, U, J, point.mu/scale, theta);
+        energy probth(ndim, 0, U, U, J, point.mu/scale, theta);
         population popth(probth, npop);
         algo.evolve(popth);
 //        cout << popth.champion().f << endl;
@@ -400,7 +436,7 @@ void phasepoints(Parameter& xi, phase_parameters pparms, queue<Point>& points, /
         fres.fth[point.i][point.j] = x0;
         results.Ethres[point.i][point.j] = Eth;
 
-        energy prob2th(ndim, U, J, point.mu/scale, 2*theta);
+        energy prob2th(ndim, 0, U, U, J, point.mu/scale, 2*theta);
         population pop2th(prob2th, npop);
         algo.evolve(pop2th);
 //        cout << pop2th.champion().f << endl;
