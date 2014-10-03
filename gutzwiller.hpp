@@ -106,7 +106,9 @@ inline double eps(double U, int n, int m) {
     return (n - m + 1) * U;
 }
 
-//inline double eps(vector<double> U, )
+inline double eps(vector<double> U, int i, int j, int n, int m, int k, int l, int p, int q) {
+    return n*U[i] - (m-1)*U[j] + (q-1)*U[k] - p*U[l];
+}
 
 //double Encfunc(unsigned ndim, const double *x, double *grad, void *data);
 //double Ecfunc(unsigned ndim, const double *x, double *grad, void *data);
