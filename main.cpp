@@ -235,7 +235,7 @@ void phasepoints(Parameter& xi, phase_parameters pparms, queue<Point>& points, /
         //
         //    vector<double> U(L), J(L);
         double W[L];
-        double Wi[] = {1.6956880004610803e11,1.800041740841693e11,2.089998794982676e11,2.3959098134934894e11,1.8235491877957178e11};
+//        double Wi[] = {1.6956880004610803e11,1.800041740841693e11,2.089998794982676e11,2.3959098134934894e11,1.8235491877957178e11};
         for (int i = 0; i < L; i++) {
             W[i] = xi[i] * point.x;
         }
@@ -274,8 +274,8 @@ void phasepoints(Parameter& xi, phase_parameters pparms, queue<Point>& points, /
         data.xmin = qwe.data();
 //        data.xmin = vector<double>(ndim);
         
-//        nlopt::opt localopt(nlopt::LD_LBFGS, ndim);
-        nlopt::opt localopt(nlopt::LN_NELDERMEAD, ndim);
+        nlopt::opt localopt(nlopt::LD_LBFGS, ndim);
+//        nlopt::opt localopt(nlopt::LN_NELDERMEAD, ndim);
         localopt.set_lower_bounds(-1);
         localopt.set_upper_bounds(1);
         localopt.set_min_objective(energyfunc, &fdata);
@@ -287,7 +287,7 @@ void phasepoints(Parameter& xi, phase_parameters pparms, queue<Point>& points, /
         
         vector<double> popx;
         
-        de_1220 algo(1000);
+        de_1220 algo(2000);
 //        sa_corana algo(10000, 1000, 0.01, 10, 20);
 //        jde algo(1000,14);
 //        de local(1000);
@@ -319,26 +319,27 @@ void phasepoints(Parameter& xi, phase_parameters pparms, queue<Point>& points, /
         
         int npop = 20;
         
-//        /*double*/ U0 = 0.7786907302065487;
+////        /*double*/ U0 = 0.7786907302065487;
 //        U0 = 0.8786907302065487;
 //        double Ua[] = {0.922213971320164, 0.856881508533313, 0.700324261083433, \
 //0.571208141081931, 0.842825769013902};
 //        double dUa[] = {0.14352324111361536, 0.07819077832676435, -0.07836646912311562, \
 //-0.2074825891246177, 0.06413503880735338};
-////        double Ja[] = {0.07683663838672976, 0.07283001881815312, 0.07694395816589483, \
-////0.07347544296692873, 0.0761660621229901};
+//////        double Ja[] = {0.07683663838672976, 0.07283001881815312, 0.07694395816589483, \
+//////0.07347544296692873, 0.0761660621229901};
 //        double Ja[] = {0.07589911596407645, 0.07130662982267995, 0.07670884040551718, \
 //0.07599776398921115, 0.0705576727237478};
-////        double Ja[] = {0.07283001881815312, 0.07694395816589483, \
-////0.07347544296692873, 0.0761660621229901,0.07683663838672976};
+//////        double Ja[] = {0.07283001881815312, 0.07694395816589483, \
+//////0.07347544296692873, 0.0761660621229901,0.07683663838672976};
 //        vector<double> dU(5);
 //        for(int i = 0; i < 5; i++) {
 //            U[i] = Ua[i];
-//            dU[i] = U[i]-U0;//dUa[i];
+////            dU[i] = U[i]-U0;//dUa[i];
+//            dU[i] = dUa[i];
 //            J[i] = Ja[i];
 //        }
-//        
-//        energy prob0(ndim, U0, dU, U, J, point.mu/scale, 0.1);
+////        
+//        energyprob prob(ndim, U0, dU, U, J, point.mu/scale, 0.1);
 //        fitness_vector fv(1);
 //        decision_vector dv(ndim);
 //        double dva[] = {0.12806249101263278, 0, 0.054426358315506206, 0, \
@@ -354,18 +355,43 @@ void phasepoints(Parameter& xi, phase_parameters pparms, queue<Point>& points, /
 //0.022906004326788187, 0, 0.5226675531791949, 0, \
 //0.5421896797766332, 0, 0.5693170132769998, 0, 0.27577384468187405, \
 //0, 0.012076767067972723, 0, 0.18036090673232205, 0};
+//        double dva2[2*L*dim];
 //        for (int i = 0; i < ndim; i++) {
 //            dv[i] = dva[i];
+//            dva2[i] = dva[i];
 //        }
-//        prob0.objfun_impl(fv, dv);
+//        int nloops = 1;
+//        time_t start1 = time(NULL);
+//        for(int i = 0; i < nloops; i++) {
+//        prob.objfun_impl(fv, dv);
+//        }
+//        time_t end1 = time(NULL);
 //        cout << ::math(fv[0]) << endl;
+//        cout << (end1 - start1) << endl;
+//        double en, en2;
+//        time_t start2 = time(NULL);
+//        vector<double> grad(2*L*dim);
+//        double dx = 1e-6;
+//        int di = 12;
+//        dva2[di] += dx;
+//        for (int i = 0; i < nloops; i++) {
+//        en = energy(dva, Ua, U0, dUa, Ja, point.mu/scale, 0.1);
+//        en2 = energy(dva2, Ua, U0, dUa, Ja, point.mu/scale, 0.1);
+//        energygrad(dva, Ua, U0, dUa, Ja, point.mu/scale, 0.1, grad.data());
+//        }
+//        double den = (en2 - en)/dx;
+//        time_t end2 = time(NULL);
+//        cout << ::math(en) << endl;
+//        cout << "grad " << ::math(grad) << endl;
+//        cout << "den " << ::math(den) << endl;
+//        cout << (end2 - start2) << endl;
 //        exit(0);
 //        /*double*/ U0 = 2;//0.786907302065487;
 //                   fdata.U0 = U0;
-        energy prob0(ndim, U0, dU, U, J, point.mu/scale, 0);
+        energyprob prob0(ndim, U0, dU, U, J, point.mu/scale, 0);
         population pop0(prob0, npop);
         algo.evolve(pop0);
-//        cout << pop0.champion().f << endl;
+//        cout << "E0 PaGMO: " << pop0.champion().f << endl;
         
 //        for(int q = 0; q < 10; q++) {
 //        population pop0(prob0, npop);
@@ -375,7 +401,7 @@ void phasepoints(Parameter& xi, phase_parameters pparms, queue<Point>& points, /
 //        cout << pop0.champion().x << endl;
 //        exit(0);
         
-        double E0 = DBL_MAX;
+        double E0 = pop0.champion().f[0];
         popx = pop0.champion().x;
 //        popx.resize(ndim);
 //        for(int i = 0; i < popx.size(); i++) {
@@ -390,7 +416,7 @@ void phasepoints(Parameter& xi, phase_parameters pparms, queue<Point>& points, /
             E0 = pop0.champion().f[0];
         }
 //        cout << ::math(fdata.Ei) << endl;
-//        cout << ::math(E0) << endl;
+//        cout << "E0 nlopt: " << ::math(E0) << endl;
 //        exit(0);
         
 //        lalgo.evolve(pop0);
@@ -417,13 +443,14 @@ void phasepoints(Parameter& xi, phase_parameters pparms, queue<Point>& points, /
         fres.f0[point.i][point.j] = x0;
         results.E0res[point.i][point.j] = E0;
 
-        energy probth(ndim, U0, dU, U, J, point.mu/scale, theta);
+        energyprob probth(ndim, U0, dU, U, J, point.mu/scale, theta);
 //        energy probth(ndim, 0, U, U, J, point.mu/scale, theta);
         population popth(probth, npop);
         algo.evolve(popth);
+//        cout << "Eth PaGMO: " << popth.champion().f << endl;
 //        cout << popth.champion().f << endl;
 
-        double Eth = DBL_MAX;
+        double Eth = popth.champion().f[0];
         popx = popth.champion().x;
         fdata.theta = theta;
         try {
@@ -434,7 +461,7 @@ void phasepoints(Parameter& xi, phase_parameters pparms, queue<Point>& points, /
             Eth = popth.champion().f[0];
         }
 //        cout << ::math(fdata.Ei) << endl;
-//        cout << ::math(Eth) << endl;
+//        cout << "Eth nlopt: " << ::math(Eth) << endl;
         
 //        lalgo.evolve(popth);
 //        cout << popth.champion().f << endl;
@@ -454,13 +481,14 @@ void phasepoints(Parameter& xi, phase_parameters pparms, queue<Point>& points, /
         fres.fth[point.i][point.j] = x0;
         results.Ethres[point.i][point.j] = Eth;
 
-        energy prob2th(ndim, U0, dU, U, J, point.mu/scale, 2*theta);
+        energyprob prob2th(ndim, U0, dU, U, J, point.mu/scale, 2*theta);
 //        energy prob2th(ndim, 0, U, U, J, point.mu/scale, 2*theta);
         population pop2th(prob2th, npop);
         algo.evolve(pop2th);
+//        cout << "E2th PaGMO: " << pop2th.champion().f << endl;
 //        cout << pop2th.champion().f << endl;
 
-        double E2th = DBL_MAX;
+        double E2th = pop2th.champion().f[0];
         popx = pop2th.champion().x;
         fdata.theta = 2*theta;
         try {
@@ -471,7 +499,7 @@ void phasepoints(Parameter& xi, phase_parameters pparms, queue<Point>& points, /
             E2th = pop2th.champion().f[0];
         }
 //        cout << ::math(fdata.Ei) << endl;
-//        cout << ::math(E2th) << endl;
+//        cout << "E2th nlopt: " << ::math(E2th) << endl;
         
 //        lalgo.evolve(pop2th);
 //        cout << pop2th.champion().f << endl;
