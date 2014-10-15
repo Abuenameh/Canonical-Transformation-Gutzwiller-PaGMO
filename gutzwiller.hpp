@@ -26,7 +26,7 @@ using namespace boost::numeric;
 
 typedef complex<double> doublecomplex;
 
-#define L 5
+#define L 50
 #define nmax 5
 #define idim (nmax+1)
 #define dim (nmax+1)
@@ -69,6 +69,8 @@ struct funcdata {
 };
 
 struct funcdata2 {
+    double U0;
+    vector<double>& dU;
     vector<double>& U;
     vector<double>& J;
     double mu;
@@ -122,20 +124,28 @@ double Efunc(unsigned ndim, const double *f, double *grad, void *data);
 
 double energyfunc(const vector<double>& x, vector<double>& grad, void *data);
 
+double energy(double* x, double* U, double U0, double* dU, double* J, double mu, double theta);
+void energygrad(double* x, double* U, double U0, double* dU, double* J, double mu, double theta, double* grad);
+
 //double energy(double *f, int ndim, void *data);
 
-class energy : public base {
+class energyprob : public base {
 public:
-    energy(int n, double U0_, vector<double>& dU_, vector<double>& U_, vector<double>& J_, double mu_, double theta_) : base(n), U0(U0_), dU(dU_), U(U_), J(J_), mu(mu_), theta(theta_) {
+    energyprob(int n, double U0_, vector<double>& dU_, vector<double>& U_, vector<double>& J_, double mu_, double theta_) : base(n), U0(U0_), dU(dU_), U(U_), J(J_), mu(mu_), theta(theta_), count(new int) {
         costh = cos(theta);
         sinth = sin(theta);
         cos2th = cos(2*theta);
         sin2th = sin(2*theta);
+        *count = 0;
     }
     
     base_ptr clone() const;
     void objfun_impl(fitness_vector& f, const decision_vector& x) const;
+    void objfun_implold(fitness_vector& f, const decision_vector& x) const;
+    void objfun_implnew(fitness_vector& f, const decision_vector& x) const;
     void objfun_impl2(fitness_vector& f, const decision_vector& x) const;
+    void objfun_impl3(fitness_vector& f, const decision_vector& x) const;
+    void objfun_impl4(fitness_vector& f, const decision_vector& x) const;
     
 private:
     double U0;
@@ -148,6 +158,7 @@ private:
     double sinth;
     double cos2th;
     double sin2th;
+    int* count;
 };
 
 /*class bayesfunc : public bayesopt::ContinuousModel {

@@ -12,6 +12,378 @@ static inline double Sqr(double x) {
 
 double energyfunc(const vector<double>& x, vector<double>& grad, void *data) {
     funcdata2* fdata = static_cast<funcdata2*> (data);
+    double U0 = fdata->U0;
+    vector<double>& dU = fdata->dU;
+    vector<double>& U = fdata->U;
+    vector<double>& J = fdata->J;
+    double mu = fdata->mu;
+    double theta = fdata->theta;
+
+    double E = energy(const_cast<double*>(x.data()), U.data(), U0, dU.data(), J.data(), mu, theta);
+    if (!grad.empty()) {
+        energygrad(const_cast<double*>(x.data()), U.data(), U0, dU.data(), J.data(), mu, theta, grad.data());
+    }
+    return E;
+}
+
+double energyfunc2(const vector<double>& x, vector<double>& grad, void *data) {
+    funcdata2* fdata = static_cast<funcdata2*> (data);
+    double U0 = fdata->U0;
+    vector<double>& dU = fdata->dU;
+    vector<double>& U = fdata->U;
+    vector<double>& J = fdata->J;
+    double mu = fdata->mu;
+    double theta = fdata->theta;
+
+    doublecomplex expth = exp(doublecomplex(0, 1) * theta);
+    doublecomplex expmth = ~expth;
+    doublecomplex exp2th = expth*expth;
+    doublecomplex expm2th = ~exp2th;
+
+    doublecomplex Ec = 0;
+
+    const doublecomplex * f[L];
+    vector<double> norm2(L, 0);
+    for (int i = 0; i < L; i++) {
+        f[i] = reinterpret_cast<const doublecomplex*> (&x[2 * i * dim]);
+        for (int n = 0; n <= nmax; n++) {
+            norm2[i] += norm(f[i][n]);
+        }
+    }
+
+    for (int i = 0; i < L; i++) {
+
+        int k1 = mod(i - 2);
+        int j1 = mod(i - 1);
+        int j2 = mod(i + 1);
+        int k2 = mod(i + 2);
+
+        doublecomplex E0 = 0;
+        doublecomplex E1j1 = 0;
+        doublecomplex E1j2 = 0;
+        doublecomplex E2j1 = 0;
+        doublecomplex E2j2 = 0;
+        doublecomplex E3j1 = 0;
+        doublecomplex E3j2 = 0;
+        doublecomplex E4j1j2 = 0;
+        doublecomplex E5j1k1 = 0;
+        doublecomplex E5j2k2 = 0;
+
+        doublecomplex dE0_1j1 = 0;
+        doublecomplex dE0_1j2 = 0;
+
+        doublecomplex dE1_2j1 = 0;
+        doublecomplex dE1_2j2 = 0;
+        doublecomplex dE1_3j1 = 0;
+        doublecomplex dE1_3j2 = 0;
+        doublecomplex dE1_4j1j2 = 0;
+        doublecomplex dE1_5j1k1 = 0;
+        doublecomplex dE1_5j2k2 = 0;
+
+        doublecomplex dE2_2j1 = 0;
+        doublecomplex dE2_2j2 = 0;
+        doublecomplex dE2_4j1j2 = 0;
+        doublecomplex dE2_5j1k1 = 0;
+        doublecomplex dE2_5j2k2 = 0;
+
+        doublecomplex dE3_2j1 = 0;
+        doublecomplex dE3_2j2 = 0;
+        doublecomplex dE3_4j1j2 = 0;
+        doublecomplex dE3_5j1k1 = 0;
+        doublecomplex dE3_5j2k2 = 0;
+
+        for (int n = 0; n <= nmax; n++) {
+            E0 += (0.5 * U[i] * n * (n - 1) - mu * n) * ~f[i][n] * f[i][n];
+
+            if (n < nmax) {
+                E1j1 += -J[j1] * expth * g(n, n + 1) * ~f[i][n + 1] * ~f[j1][n]
+                        * f[i][n] * f[j1][n + 1];
+                E1j2 += -J[i] * expmth * g(n, n + 1) * ~f[i][n + 1] * ~f[j2][n] * f[i][n]
+                        * f[j2][n + 1];
+
+                if (n > 0) {
+                    E2j1 += 0.5 * J[j1] * J[j1] * exp2th * g(n, n) * g(n - 1, n + 1) * (1 / eps(U0, n, n))
+                            * ~f[i][n + 1] * ~f[j1][n - 1] * f[i][n - 1] * f[j1][n + 1];
+                    E2j2 += 0.5 * J[i] * J[i] * expm2th * g(n, n) * g(n - 1, n + 1) * (1 / eps(U0, n, n))
+                            * ~f[i][n + 1] * ~f[j2][n - 1] * f[i][n - 1] * f[j2][n + 1];
+                }
+                if (n < nmax - 1) {
+                    E2j1 -= 0.5 * J[j1] * J[j1] * exp2th * g(n, n + 2) * g(n + 1, n + 1) * (1 / eps(U0, n, n + 2))
+                            * ~f[i][n + 2] * ~f[j1][n] * f[i][n] * f[j1][n + 2];
+                    E2j2 -= 0.5 * J[i] * J[i] * expm2th * g(n, n + 2) * g(n + 1, n + 1) * (1 / eps(U0, n, n + 2))
+                            * ~f[i][n + 2] * ~f[j2][n] * f[i][n] * f[j2][n + 2];
+                }
+
+                if (n > 1) {
+                    dE2_2j1 += -J[j1] * J[j1] * exp2th * g(n, n - 1) * g(n - 1, n)
+                            * (eps(dU, i, j1, n, n - 1, i, j1, n - 1, n) / (eps(U0, n, n - 1)*(eps(U0, n, n - 1) + eps(U0, n - 1, n))))
+                            * ~f[i][n + 1] * ~f[j1][n - 2] * f[i][n - 1] * f[j1][n];
+                    dE2_2j2 += -J[i] * J[i] * expm2th * g(n, n - 1) * g(n - 1, n)
+                            * (eps(dU, i, j2, n, n - 1, i, j2, n - 1, n) / (eps(U0, n, n - 1)*(eps(U0, n, n - 1) + eps(U0, n - 1, n))))
+                            * ~f[i][n + 1] * ~f[j2][n - 2] * f[i][n - 1] * f[j2][n];
+                }
+                if (n < nmax - 2) {
+                    dE2_2j1 -= -J[j1] * J[j1] * exp2th * g(n, n + 3) * g(n + 1, n + 2)
+                            * (eps(dU, i, j1, n, n + 3, i, j1, n + 1, n + 2) / (eps(U0, n, n + 3)*(eps(U0, n, n + 3) + eps(U0, n + 1, n + 2))))
+                            * ~f[i][n + 2] * ~f[j1][n + 1] * f[i][n] * f[j1][n + 3];
+                    dE2_2j2 -= -J[i] * J[i] * expm2th * g(n, n + 3) * g(n + 1, n + 2)
+                            * (eps(dU, i, j2, n, n + 3, i, j2, n + 1, n + 2) / (eps(U0, n, n + 3)*(eps(U0, n, n + 3) + eps(U0, n + 1, n + 2))))
+                            * ~f[i][n + 2] * ~f[j2][n + 1] * f[i][n] * f[j2][n + 3];
+                }
+
+                for (int m = 1; m <= nmax; m++) {
+                    if (n != m - 1) {
+                        E3j1 += 0.5 * J[j1] * J[j1] * g(n, m) * g(m - 1, n + 1) * (1 / eps(U0, n, m))
+                                * (~f[i][n + 1] * ~f[j1][m - 1] * f[i][n + 1] * f[j1][m - 1] -
+                                ~f[i][n] * ~f[j1][m] * f[i][n] * f[j1][m]);
+                        E3j2 += 0.5 * J[i] * J[i] * g(n, m) * g(m - 1, n + 1) * (1 / eps(U0, n, m))
+                                * (~f[i][n + 1] * ~f[j2][m - 1] * f[i][n + 1] * f[j2][m - 1] -
+                                ~f[i][n] * ~f[j2][m] * f[i][n] * f[j2][m]);
+
+                        dE0_1j1 += J[j1] * expth * g(n, m) * (eps(dU, i, j1, n, m) / eps(U0, n, m))
+                                * ~f[i][n + 1] * ~f[j1][m - 1] * f[i][n] * f[j1][m];
+                        dE0_1j2 += J[i] * expmth * g(n, m) * (eps(dU, i, j2, n, m) / eps(U0, n, m))
+                                * ~f[i][n + 1] * ~f[j2][m - 1] * f[i][n] * f[j2][m];
+
+                        if (n != m - 3 && m > 1 && n < nmax - 1) {
+                            dE1_2j1 += -0.5 * J[j1] * J[j1] * exp2th * g(n, m) * g(n + 1, m - 1)
+                                    * (eps(dU, i, j1, n, m) / (eps(U0, n, m) * eps(U0, n + 1, m - 1)))
+                                    * ~f[i][n + 2] * ~f[j1][m - 2] * f[i][n] * f[j1][m];
+                            dE1_2j2 += -0.5 * J[i] * J[i] * expm2th * g(n, m) * g(n + 1, m - 1)
+                                    * (eps(dU, i, j2, n, m) / (eps(U0, n, m) * eps(U0, n + 1, m - 1)))
+                                    * ~f[i][n + 2] * ~f[j2][m - 2] * f[i][n] * f[j2][m];
+                        }
+                        if (n != m + 1 && n > 0 && m < nmax) {
+                            dE1_2j1 -= -0.5 * J[j1] * J[j1] * exp2th * g(n, m) * g(n - 1, m + 1)
+                                    * (eps(dU, i, j1, n, m) / (eps(U0, n, m) * eps(U0, n - 1, m + 1)))
+                                    * ~f[i][n + 1] * ~f[j1][m - 1] * f[i][n - 1] * f[j1][m + 1];
+                            dE1_2j2 -= -0.5 * J[i] * J[i] * expm2th * g(n, m) * g(n - 1, m + 1)
+                                    * (eps(dU, i, j2, n, m) / (eps(U0, n, m) * eps(U0, n - 1, m + 1)))
+                                    * ~f[i][n + 1] * ~f[j2][m - 1] * f[i][n - 1] * f[j2][m + 1];
+                        }
+
+                        if (n > 0) {
+                            dE2_4j1j2 += -J[j1] * J[i] * g(n, m) * g(n - 1, n)
+                                    * (eps(dU, i, j1, n, m, i, j2, n - 1, n) / (eps(U0, n, m) * (eps(U0, n, m) + eps(U0, n - 1, n))))
+                                    * ~f[i][n + 1] * ~f[j1][m - 1] * ~f[j2][n - 1]
+                                    * f[i][n - 1] * f[j1][m] * f[j2][n];
+                            dE2_4j1j2 += -J[i] * J[j1] * g(n, m) * g(n - 1, n)
+                                    * (eps(dU, i, j2, n, m, i, j1, n - 1, n) / (eps(U0, n, m) * (eps(U0, n, m) + eps(U0, n - 1, n))))
+                                    * ~f[i][n + 1] * ~f[j2][m - 1] * ~f[j1][n - 1]
+                                    * f[i][n - 1] * f[j2][m] * f[j1][n];
+                        }
+                        if (n < nmax - 1) {
+                            dE2_4j1j2 -= -J[j1] * J[i] * g(n, m) * g(n + 1, n + 2)
+                                    * (eps(dU, i, j1, n, m, i, j2, n + 1, n + 2) / (eps(U0, n, m) * (eps(U0, n, m) + eps(U0, n + 1, n + 2))))
+                                    * ~f[i][n + 2] * ~f[j1][m - 1] * ~f[j2][n + 1]
+                                    * f[i][n] * f[j1][m] * f[j2][n + 2];
+                            dE2_4j1j2 -= -J[i] * J[j1] * g(n, m) * g(n + 1, n + 2)
+                                    * (eps(dU, i, j2, n, m, i, j1, n + 1, n + 2) / (eps(U0, n, m) * (eps(U0, n, m) + eps(U0, n + 1, n + 2))))
+                                    * ~f[i][n + 2] * ~f[j2][m - 1] * ~f[j1][n + 1]
+                                    * f[i][n] * f[j2][m] * f[j1][n + 2];
+                        }
+
+                        dE1_3j1 += -0.5 * J[j1] * J[j1] * g(n, m) * g(m - 1, n + 1)
+                                * (eps(dU, i, j1, n, m) / (eps(U0, n, m) * eps(U0, m - 1, n + 1)))
+                                * (~f[i][n] * ~f[j1][m] * f[i][n] * f[j1][m] -
+                                ~f[i][n + 1] * ~f[j1][m - 1] * f[i][n + 1] * f[j1][m - 1]);
+                        dE1_3j2 += -0.5 * J[i] * J[i] * g(n, m) * g(m - 1, n + 1)
+                                * (eps(dU, i, j2, n, m) / (eps(U0, n, m) * eps(U0, m - 1, n + 1)))
+                                * (~f[i][n] * ~f[j2][m] * f[i][n] * f[j2][m] -
+                                ~f[i][n + 1] * ~f[j2][m - 1] * f[i][n + 1] * f[j2][m - 1]);
+
+                        for (int q = 1; q <= nmax; q++) {
+                            if (n < nmax - 1 && n != q - 2) {
+                                dE1_4j1j2 += -0.5 * J[j1] * J[i] * g(n, m) * g(n + 1, q)
+                                        * (eps(dU, i, j1, n, m) / (eps(U0, n, m) * eps(U0, n + 1, q)))
+                                        * ~f[i][n + 2] * ~f[j1][m - 1] * ~f[j2][q - 1]
+                                        * f[i][n] * f[j1][m] * f[j2][q];
+                                dE1_4j1j2 += -0.5 * J[i] * J[j1] * g(n, m) * g(n + 1, q)
+                                        * (eps(dU, i, j2, n, m) / (eps(U0, n, m) * eps(U0, n + 1, q)))
+                                        * ~f[i][n + 2] * ~f[j2][m - 1] * ~f[j1][q - 1]
+                                        * f[i][n] * f[j2][m] * f[j1][q];
+                            }
+                            if (n > 0 && n != q) {
+                                dE1_4j1j2 -= -0.5 * J[j1] * J[i] * g(n, m) * g(n - 1, q)
+                                        * (eps(dU, i, j1, n, m) / (eps(U0, n, m) * eps(U0, n - 1, q)))
+                                        * ~f[i][n + 1] * ~f[j1][m - 1] * ~f[j2][q - 1]
+                                        * f[i][n - 1] * f[j1][m] * f[j2][q];
+                                dE1_4j1j2 -= -0.5 * J[i] * J[j1] * g(n, m) * g(n - 1, q)
+                                        * (eps(dU, i, j2, n, m) / (eps(U0, n, m) * eps(U0, n - 1, q)))
+                                        * ~f[i][n + 1] * ~f[j2][m - 1] * ~f[j1][q - 1]
+                                        * f[i][n - 1] * f[j2][m] * f[j1][q];
+                            }
+
+                            if (m != q) {
+                                dE1_5j1k1 += -0.5 * J[j1] * J[k1] * exp2th * g(n, m) * g(m - 1, q)
+                                        * (eps(dU, i, j1, n, m) / (eps(U0, n, m) * eps(U0, m - 1, q)))
+                                        * ~f[i][n + 1] * ~f[j1][m] * ~f[k1][q - 1]
+                                        * f[i][n] * f[j1][m] * f[k1][q];
+                                dE1_5j2k2 += -0.5 * J[i] * J[j2] * expm2th * g(n, m) * g(m - 1, q)
+                                        * (eps(dU, i, j2, n, m) / (eps(U0, n, m) * eps(U0, m - 1, q)))
+                                        * ~f[i][n + 1] * ~f[j2][m] * ~f[k2][q - 1]
+                                        * f[i][n] * f[j2][m] * f[k2][q];
+                                dE1_5j1k1 -= -0.5 * J[j1] * J[k1] * exp2th * g(n, m) * g(m - 1, q)
+                                        * (eps(dU, i, j1, n, m) / (eps(U0, n, m) * eps(U0, m - 1, q)))
+                                        * ~f[i][n + 1] * ~f[j1][m - 1] * ~f[k1][q - 1]
+                                        * f[i][n] * f[j1][m - 1] * f[k1][q];
+                                dE1_5j2k2 -= -0.5 * J[i] * J[j2] * expm2th * g(n, m) * g(m - 1, q)
+                                        * (eps(dU, i, j2, n, m) / (eps(U0, n, m) * eps(U0, m - 1, q)))
+                                        * ~f[i][n + 1] * ~f[j2][m - 1] * ~f[k2][q - 1]
+                                        * f[i][n] * f[j2][m - 1] * f[k2][q];
+                            }
+
+                        }
+
+                        for (int p = 0; p < nmax; p++) {
+
+                            if (p != n - 1 && 2 * n - m == p && n > 0) {
+                                E4j1j2 += 0.5 * J[j1] * J[i] * g(n, m) * g(n - 1, p + 1) * (1 / eps(U0, n, m))
+                                        * ~f[i][n + 1] * ~f[j1][m - 1] * ~f[j2][p]
+                                        * f[i][n - 1] * f[j1][m] * f[j2][p + 1];
+                                E4j1j2 += 0.5 * J[j1] * J[i] * g(n, m) * g(n - 1, p + 1) * (1 / eps(U0, n, m))
+                                        * ~f[i][n + 1] * ~f[j2][m - 1] * ~f[j1][p]
+                                        * f[i][n - 1] * f[j2][m] * f[j1][p + 1];
+                            }
+                            if (p != n + 1 && 2 * n - m == p - 2 && n < nmax - 1) {
+                                E4j1j2 -= 0.5 * J[j1] * J[i] * g(n, m) * g(n + 1, p + 1) * (1 / eps(U0, n, m))
+                                        * ~f[i][n + 2] * ~f[j1][m - 1] * ~f[j2][p]
+                                        * f[i][n] * f[j1][m] * f[j2][p + 1];
+                                E4j1j2 -= 0.5 * J[j1] * J[i] * g(n, m) * g(n + 1, p + 1) * (1 / eps(U0, n, m))
+                                        * ~f[i][n + 2] * ~f[j2][m - 1] * ~f[j1][p]
+                                        * f[i][n] * f[j2][m] * f[j1][p + 1];
+                            }
+
+                            if (p != n - 1 && 2 * n - m != p && n > 0) {
+                                dE3_4j1j2 += -0.25 * J[j1] * J[i] * g(n, m) * g(n - 1, p + 1)
+                                        * (eps(dU, i, j1, n, m, i, j2, p, n) / (eps(U0, n, m)*(eps(U0, n, m) + eps(U0, n - 1, p + 1))))
+                                        * ~f[i][n + 1] * ~f[j1][m - 1] * ~f[j2][p]
+                                        * f[i][n - 1] * f[j1][m] * f[j2][p + 1];
+                                dE3_4j1j2 += -0.25 * J[i] * J[j1] * g(n, m) * g(n - 1, p + 1)
+                                        * (eps(dU, i, j2, n, m, i, j1, p, n) / (eps(U0, n, m)*(eps(U0, n, m) + eps(U0, n - 1, p + 1))))
+                                        * ~f[i][n + 1] * ~f[j2][m - 1] * ~f[j1][p]
+                                        * f[i][n - 1] * f[j2][m] * f[j1][p + 1];
+                            }
+                            if (p != n + 1 && 2 * n - m != p - 2 && n < nmax - 1) {
+                                dE3_4j1j2 -= -0.25 * J[j1] * J[i] * g(n, m) * g(n + 1, p + 1)
+                                        * (eps(dU, i, j1, n, m, i, j2, p, n + 2) / (eps(U0, n, m)*(eps(U0, n, m) + eps(U0, n + 1, p + 1))))
+                                        * ~f[i][n + 2] * ~f[j1][m - 1] * ~f[j2][p]
+                                        * f[i][n] * f[j1][m] * f[j2][p + 1];
+                                dE3_4j1j2 -= -0.25 * J[i] * J[j1] * g(n, m) * g(n + 1, p + 1)
+                                        * (eps(dU, i, j2, n, m, i, j1, p, n + 2) / (eps(U0, n, m)*(eps(U0, n, m) + eps(U0, n + 1, p + 1))))
+                                        * ~f[i][n + 2] * ~f[j2][m - 1] * ~f[j1][p]
+                                        * f[i][n] * f[j2][m] * f[j1][p + 1];
+                            }
+
+                            if (p != m - 1 && n != p) {
+                                dE3_5j1k1 += -0.25 * J[j1] * J[k1] * exp2th * g(n, m) * g(m - 1, p + 1)
+                                        * (eps(dU, i, j1, n, m, j1, k1, p, m) / (eps(U0, n, m)*(eps(U0, n, m) + eps(U0, m - 1, p + 1))))
+                                        * (~f[i][n + 1] * ~f[j1][m - 1] * ~f[k1][p] * f[i][n] * f[j1][m - 1] * f[k1][p + 1] -
+                                        ~f[i][n + 1] * ~f[j1][m] * ~f[k1][p] * f[i][n] * f[j1][m] * f[k1][p + 1]);
+                                dE3_5j2k2 += -0.25 * J[i] * J[j2] * expm2th * g(n, m) * g(m - 1, p + 1)
+                                        * (eps(dU, i, j2, n, m, j2, k2, p, m) / (eps(U0, n, m)*(eps(U0, n, m) + eps(U0, m - 1, p + 1))))
+                                        * (~f[i][n + 1] * ~f[j2][m - 1] * ~f[k2][p] * f[i][n] * f[j2][m - 1] * f[k2][p + 1] -
+                                        ~f[i][n + 1] * ~f[j2][m] * ~f[k2][p] * f[i][n] * f[j2][m] * f[k2][p + 1]);
+                            }
+                        }
+
+                        E5j1k1 += 0.5 * J[j1] * J[k1] * exp2th * g(n, m) * g(m - 1, n + 1)*(1 / eps(U0, n, m))
+                                * (~f[i][n + 1] * ~f[j1][m - 1] * ~f[k1][n]
+                                * f[i][n] * f[j1][m - 1] * f[k1][n + 1] -
+                                ~f[i][n + 1] * ~f[j1][m] * ~f[k1][n]
+                                * f[i][n] * f[j1][m] * f[k1][n + 1]);
+                        E5j2k2 += 0.5 * J[j2] * J[i] * expm2th * g(n, m) * g(m - 1, n + 1)*(1 / eps(U0, n, m))
+                                * (~f[i][n + 1] * ~f[j2][m - 1] * ~f[k2][n]
+                                * f[i][n] * f[j2][m - 1] * f[k2][n + 1] -
+                                ~f[i][n + 1] * ~f[j2][m] * ~f[k2][n]
+                                * f[i][n] * f[j2][m] * f[k2][n + 1]);
+
+                        dE2_5j1k1 += -J[j1] * J[k1] * exp2th * g(n, m) * g(m - 1, m)
+                                * (eps(dU, i, j1, n, m, j1, k1, m - 1, m) / (eps(U0, n, m)*(eps(U0, n, m) + eps(U0, m - 1, m))))
+                                * (~f[i][n + 1] * ~f[j1][m - 1] * ~f[k1][m - 1] * f[i][n] * f[j1][m - 1] * f[k1][m] -
+                                ~f[i][n + 1] * ~f[j1][m] * ~f[k1][m - 1] * f[i][n] * f[j1][m] * f[k1][m]);
+                        dE2_5j2k2 += -J[i] * J[j2] * expm2th * g(n, m) * g(m - 1, m)
+                                * (eps(dU, i, j2, n, m, j2, k2, m - 1, m) / (eps(U0, n, m)*(eps(U0, n, m) + eps(U0, m - 1, m))))
+                                * (~f[i][n + 1] * ~f[j2][m - 1] * ~f[k2][m - 1] * f[i][n] * f[j2][m - 1] * f[k2][m] -
+                                ~f[i][n + 1] * ~f[j2][m] * ~f[k2][m - 1] * f[i][n] * f[j2][m] * f[k2][m]);
+
+                        if (m != n - 1 && n != m && m < nmax && n > 0) {
+                            dE3_2j1 += -0.25 * J[j1] * J[j1] * exp2th * g(n, m) * g(n - 1, m + 1)
+                                    * (eps(dU, i, j1, n, m, i, j1, m, n) / (eps(U0, n, m)*(eps(U0, n, m) + eps(U0, n - 1, m + 1))))
+                                    * ~f[i][n + 1] * ~f[j1][m - 1] * f[i][n - 1] * f[j1][m + 1];
+                            dE3_2j2 += -0.25 * J[i] * J[i] * expm2th * g(n, m) * g(n - 1, m + 1)
+                                    * (eps(dU, i, j2, n, m, i, j2, m, n) / (eps(U0, n, m)*(eps(U0, n, m) + eps(U0, n - 1, m + 1))))
+                                    * ~f[i][n + 1] * ~f[j2][m - 1] * f[i][n - 1] * f[j2][m + 1];
+                        }
+                        if (n != m - 3 && n != m - 2 && n < nmax - 1 && m > 1) {
+                            dE3_2j1 -= -0.25 * J[j1] * J[j1] * exp2th * g(n, m) * g(n + 1, m - 1)
+                                    * (eps(dU, i, j1, n, m, i, j1, m - 2, n + 2) / (eps(U0, n, m)*(eps(U0, n, m) + eps(U0, n + 1, m - 1))))
+                                    * ~f[i][n + 2] * ~f[j1][m - 2] * f[i][n] * f[j1][m];
+                            dE3_2j2 -= -0.25 * J[i] * J[i] * expm2th * g(n, m) * g(n + 1, m - 1)
+                                    * (eps(dU, i, j2, n, m, i, j2, m - 2, n + 2) / (eps(U0, n, m)*(eps(U0, n, m) + eps(U0, n + 1, m - 1))))
+                                    * ~f[i][n + 2] * ~f[j2][m - 2] * f[i][n] * f[j2][m];
+                        }
+
+
+                    }
+                }
+
+            }
+
+        }
+
+        Ec += E0 / norm2[i];
+
+        Ec += E1j1 / (norm2[i] * norm2[j1]);
+        Ec += E1j2 / (norm2[i] * norm2[j2]);
+
+        Ec += E2j1 / (norm2[i] * norm2[j1]);
+        Ec += E2j2 / (norm2[i] * norm2[j2]);
+
+        Ec += E3j1 / (norm2[i] * norm2[j1]);
+        Ec += E3j2 / (norm2[i] * norm2[j2]);
+
+        Ec += (E4j1j2 + ~E4j1j2) / (norm2[i] * norm2[j1] * norm2[j2]);
+
+        Ec += (E5j1k1 + ~E5j1k1) / (norm2[i] * norm2[j1] * norm2[k1]);
+        Ec += (E5j2k2 + ~E5j2k2) / (norm2[i] * norm2[j2] * norm2[k2]);
+
+        Ec += dE0_1j1 / (norm2[i] * norm2[j1]);
+        Ec += dE0_1j2 / (norm2[i] * norm2[j2]);
+
+        Ec += dE1_2j1 / (norm2[i] * norm2[j1]);
+        Ec += dE1_2j2 / (norm2[i] * norm2[j2]);
+
+        Ec += dE1_3j1 / (norm2[i] * norm2[j1]);
+        Ec += dE1_3j2 / (norm2[i] * norm2[j2]);
+
+        Ec += (dE1_4j1j2 + ~dE1_4j1j2) / (norm2[i] * norm2[j1] * norm2[j2]);
+
+        Ec += (dE1_5j1k1 + ~dE1_5j1k1) / (norm2[i] * norm2[j1] * norm2[k1]);
+        Ec += (dE1_5j2k2 + ~dE1_5j2k2) / (norm2[i] * norm2[j2] * norm2[k2]);
+
+        Ec += dE2_2j1 / (norm2[i] * norm2[j1]);
+        Ec += dE2_2j2 / (norm2[i] * norm2[j2]);
+
+        Ec += (dE2_4j1j2 + ~dE2_4j1j2) / (norm2[i] * norm2[j1] * norm2[j2]);
+
+        Ec += (dE2_5j1k1 + ~dE2_5j1k1) / (norm2[i] * norm2[j1] * norm2[k1]);
+        Ec += (dE2_5j2k2 + ~dE2_5j2k2) / (norm2[i] * norm2[j2] * norm2[k2]);
+
+        Ec += (dE3_2j1 + ~dE3_2j1) / (norm2[i] * norm2[j1]);
+        Ec += (dE3_2j2 + ~dE3_2j2) / (norm2[i] * norm2[j2]);
+
+        Ec += 2.0 * (dE3_4j1j2 + ~dE3_4j1j2) / (norm2[i] * norm2[j1] * norm2[j2]);
+
+        Ec += 2.0 * (dE3_5j1k1 + ~dE3_5j1k1) / (norm2[i] * norm2[j1] * norm2[k1]);
+        Ec += 2.0 * (dE3_5j2k2 + ~dE3_5j2k2) / (norm2[i] * norm2[j2] * norm2[k2]);
+    }
+
+    return Ec.real();
+}
+
+double energyfunc3(const vector<double>& x, vector<double>& grad, void *data) {
+    funcdata2* fdata = static_cast<funcdata2*> (data);
     vector<double>& U = fdata->U;
     vector<double>& J = fdata->J;
     double mu = fdata->mu;
