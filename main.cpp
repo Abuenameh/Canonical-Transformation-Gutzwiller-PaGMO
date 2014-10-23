@@ -168,6 +168,8 @@ struct results {
     multi_array<double, 2 >& resth;
     multi_array<double, 2 >& resth2;
     multi_array<double, 2 >& res2th;
+    multi_array<vector<double>, 2>& Jres;
+    multi_array<vector<double>, 2>& Ures;
 };
 
 #define NSAMP 200
@@ -245,7 +247,7 @@ void phasepoints(Parameter& xi, phase_parameters pparms, queue<Point>& points, /
             //            double Wi = xi[i] * point.x;
             //            double Wj = xi[i] * point.x;
 
-            U[i] = UW(W[i]) / UW(point.x) / scale;
+            U[i] = UW(W[i]) / UW(point.x) / scale;//max(min(UW(W[i]) / UW(point.x) / scale, 1.1), 0.9);
             dU[i] = U[i] - U0;
 //            U[i] = ((max(UW(W[i]), UW(point.x)) / UW(point.x))+1) / scale;
             J[i] = /*JWij(point.x,point.x)/UW(point.x);//*/JWij(W[i], W[mod(i + 1)]) / UW(point.x) / scale;
@@ -258,6 +260,8 @@ void phasepoints(Parameter& xi, phase_parameters pparms, queue<Point>& points, /
             //            U[i] = 1+0.2*uni(rng);
             //                        J[i] = point.x;
         }
+        results.Jres[point.i][point.j] = J;
+        results.Ures[point.i][point.j] = U;
 //        cout << ::math(U) << endl << ::math(J) << endl;
         //        {
         //            boost::mutex::scoped_lock lock(points_mutex);
@@ -1005,8 +1009,10 @@ int main(int argc, char** argv) {
     int numthreads = lexical_cast<int>(argv[11]);
 
     int resi = lexical_cast<int>(argv[12]);
+    
+    double Wthresh = lexical_cast<double>(argv[13]);
 
-    bool canonical = lexical_cast<bool>(argv[13]);
+    bool canonical = lexical_cast<bool>(argv[14]);
 
 #ifdef AMAZON
     //    path resdir("/home/ubuntu/Dropbox/Amazon EC2/Simulation Results/Gutzwiller Phase Diagram");
@@ -1043,10 +1049,68 @@ int main(int argc, char** argv) {
         xi.fill(1);
         //        xi.assign(1);
         rng.seed(seed);
+        
+        int xiset = 0;
+        
+        while(true) {
         if (seed > -1) {
             for (int j = 0; j < L; j++) {
                 xi[j] = (1 + D * uni(rng));
             }
+        }
+
+        double W[L];//, U[L], J[L];
+        vector<double> U(L), J(L);
+        for (int i = 0; i < L; i++) {
+            W[i] = xi[i] * Wthresh;
+        }
+        for (int i = 0; i < L; i++) {
+            U[i] = UW(W[i]) / UW(xmax);
+            J[i] = JWij(W[i], W[mod(i + 1)]) / UW(xmax);
+        }
+        bool reject = false;
+//        for (int i = 0; i < L; i++) {
+//            double threshold = 1.2*(JWij(xmax,xmax)/UW(xmax));
+//                if (J[i]/U[i] > threshold || J[mod(i-1)]/U[i] > threshold) {
+//                    iseed--;
+//                    seed++;
+//                    reject = true;
+//                    break;
+//                }
+//        }
+        double threshold = 0.15;
+        for (int i = 0; i < L; i++) {
+            U[i] = UW(W[i]) / UW(Wthresh);
+        }
+        for (int i = 0; i < L; i++) {
+            int j1 = mod(i-1);
+            int j2 = mod(i+1);
+            for (int n = 0; n < nmax; n++) {
+                for (int m = 1; m <= nmax; m++) {
+                    if (n != m-1) {
+                        if (fabs(eps(U, i, j1, n, m)) < threshold || fabs(eps(U, i, j2, n, m)) < threshold) {
+                            reject = true;
+                            break;
+                        }
+                    }
+                }
+                if (reject) {
+                    break;
+                }
+            }
+            if (reject) {
+                break;
+            }
+        }
+//        if (reject) {
+//            iseed--;
+//            seed++;
+//            continue;
+//        }
+        if (!reject) {
+            break;
+        }
+        xiset++;
         }
 
         //        rng.seed(seed);
@@ -1068,10 +1132,13 @@ int main(int argc, char** argv) {
         printMath(os, "xres", resi, x);
         printMath(os, "mures", resi, mu);
         printMath(os, "xires", resi, xi);
+        printMath(os, "xiset", resi, xiset);
         os << flush;
 
         cout << "Res: " << resi << endl;
 
+        multi_array<vector<double>, 2> Jres(extents[nx][nmu]);
+        multi_array<vector<double>, 2> Ures(extents[nx][nmu]);
         //        multi_array<double, 2 > fcres(extents[nx][nmu]);
         multi_array<double, 2 > fsres(extents[nx][nmu]);
         //        multi_array<double, 2> dur(extents[nx][nmu]);
@@ -1090,7 +1157,7 @@ int main(int argc, char** argv) {
         multi_array<double, 2> res2th(extents[nx][nmu]);
 
         fresults fres = {fminres, fn0res, fmaxres, f0res, fthres, f2thres, f2thres};
-        results results = {E0res, Ethres, E2thres, E2thres, fsres, res0, resth, res2th, res2th};
+        results results = {E0res, Ethres, E2thres, E2thres, fsres, res0, resth, res2th, res2th, Jres, Ures};
 
         progress_display progress(nx * nmu);
 
@@ -1133,6 +1200,8 @@ int main(int argc, char** argv) {
         threads.join_all();
 
 
+        printMath(os, "Jres", resi, Jres);
+        printMath(os, "Ures", resi, Ures);
         //        printMath(os, "fcres", resi, fcres);
         printMath(os, "fsres", resi, fsres);
         //                printMath(os, "dur", resi, dur);
