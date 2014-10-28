@@ -968,6 +968,8 @@ int main(int argc, char** argv) {
     //            }
     //            
 //                return 0;
+    
+    //"${OUTPUT_PATH}" 1 1 2e10 2.5e11 1 0 1 51 0.1 0.02 6 10000000 3e11 1
 
     mt19937 rng;
     uniform_real_distribution<> uni(-1, 1);
