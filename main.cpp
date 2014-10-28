@@ -394,7 +394,7 @@ void phasepoints(Parameter& xi, phase_parameters pparms, queue<Point>& points, /
 //                   fdata.U0 = U0;
         energyprob prob0(ndim, U0, dU, U, J, point.mu/scale, 0);
         population pop0(prob0, npop);
-        algo.evolve(pop0);
+//        algo.evolve(pop0);
 //        cout << "E0 PaGMO: " << pop0.champion().f << endl;
         
 //        for(int q = 0; q < 10; q++) {
@@ -450,7 +450,7 @@ void phasepoints(Parameter& xi, phase_parameters pparms, queue<Point>& points, /
         energyprob probth(ndim, U0, dU, U, J, point.mu/scale, theta);
 //        energy probth(ndim, 0, U, U, J, point.mu/scale, theta);
         population popth(probth, npop);
-        algo.evolve(popth);
+//        algo.evolve(popth);
 //        cout << "Eth PaGMO: " << popth.champion().f << endl;
 //        cout << popth.champion().f << endl;
 
@@ -488,7 +488,7 @@ void phasepoints(Parameter& xi, phase_parameters pparms, queue<Point>& points, /
         energyprob prob2th(ndim, U0, dU, U, J, point.mu/scale, 2*theta);
 //        energy prob2th(ndim, 0, U, U, J, point.mu/scale, 2*theta);
         population pop2th(prob2th, npop);
-        algo.evolve(pop2th);
+//        algo.evolve(pop2th);
 //        cout << "E2th PaGMO: " << pop2th.champion().f << endl;
 //        cout << pop2th.champion().f << endl;
 
