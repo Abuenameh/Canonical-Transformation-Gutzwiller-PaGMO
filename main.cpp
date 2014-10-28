@@ -283,8 +283,8 @@ void phasepoints(Parameter& xi, phase_parameters pparms, queue<Point>& points, /
         localopt.set_lower_bounds(-1);
         localopt.set_upper_bounds(1);
         localopt.set_min_objective(energyfunc, &fdata);
-//        localopt.set_ftol_rel(1e-12);
-//        localopt.set_xtol_rel(1e-12);
+//        localopt.set_ftol_rel(1e-14);
+//        localopt.set_xtol_rel(1e-14);
 //        localopt.set_ftol_abs(1e-12);
 //        localopt.set_xtol_abs(1e-12);
         fdata.mu = point.mu/scale;
@@ -1051,6 +1051,7 @@ int main(int argc, char** argv) {
         rng.seed(seed);
         
         int xiset = 0;
+        double threshold = 0.2;
         
         while(true) {
         if (seed > -1) {
@@ -1078,7 +1079,6 @@ int main(int argc, char** argv) {
 //                    break;
 //                }
 //        }
-        double threshold = 0.15;
         for (int i = 0; i < L; i++) {
             U[i] = UW(W[i]) / UW(Wthresh);
         }
@@ -1133,6 +1133,7 @@ int main(int argc, char** argv) {
         printMath(os, "mures", resi, mu);
         printMath(os, "xires", resi, xi);
         printMath(os, "xiset", resi, xiset);
+        printMath(os, "threshold", resi, threshold);
         os << flush;
 
         cout << "Res: " << resi << endl;
