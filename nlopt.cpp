@@ -18,10 +18,33 @@ double energyfunc(const vector<double>& x, vector<double>& grad, void *data) {
     vector<double>& J = fdata->J;
     double mu = fdata->mu;
     double theta = fdata->theta;
+    double* f = const_cast<double*>(x.data());
 
     double E = energy(const_cast<double*>(x.data()), U.data(), U0, dU.data(), J.data(), mu, theta);
+//    cout << setprecision(numeric_limits<double>::digits10) << E << endl;
+//    cout << "Did energy" << endl;
     if (!grad.empty()) {
-        energygrad(const_cast<double*>(x.data()), U.data(), U0, dU.data(), J.data(), mu, theta, grad.data());
+//        double df = 1e-7;
+//        for(int i = 0; i < 2*L*dim; i++) {
+//            f[i] += df;
+//            double E2 = energy(f, U.data(), U0, dU.data(), J.data(), mu, theta);
+//            grad[i] = (E2 - E)/df;
+//            f[i] -= df;
+//        }
+//        cout << "approxgrad = " << grad[0] << endl;
+//        fill(grad.begin(), grad.end(), 0);
+        energygrad(f, U.data(), U0, dU.data(), J.data(), mu, theta, grad.data());
+//        cout << "realgrad = " << grad[0] << endl;
+        
+//        cout << "Before gradient" << endl;
+//        energygrad(const_cast<double*>(x.data()), U.data(), U0, dU.data(), J.data(), mu, theta, grad.data());
+//        energygrad(f, U.data(), U0, dU.data(), J.data(), mu, theta, grad.data());
+//        cout << grad[0] << endl;
+//        int gi = 0;
+//        cout << "grad = " << grad[gi] << " " << grad[gi+1] << " " << grad[gi+2] << " " << grad[gi+3] << " " << grad[gi+4] << endl;
+//        cout << "grad = " << grad[gi++] << " " << grad[gi++] << " " << grad[gi++] << " " << grad[gi++] << " " << grad[gi++] << " " << grad[gi++] << " " << grad[gi++] << " " << grad[gi++] << " " << grad[gi++] << " " << grad[gi++] << endl;
+//        cout << "grad = " << grad[1] << endl;
+//        cout << "Did gradient" << endl;
     }
     return E;
 }
