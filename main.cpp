@@ -279,6 +279,7 @@ void phasepoints(Parameter& xi, phase_parameters pparms, queue<Point>& points, /
 //        data.xmin = vector<double>(ndim);
         
         nlopt::opt localopt(nlopt::LD_LBFGS, ndim);
+//        nlopt::opt localopt(nlopt::LD_MMA, ndim);
 //        nlopt::opt localopt(nlopt::LN_NELDERMEAD, ndim);
         localopt.set_lower_bounds(-1);
         localopt.set_upper_bounds(1);
@@ -412,6 +413,10 @@ void phasepoints(Parameter& xi, phase_parameters pparms, queue<Point>& points, /
 //            popx[i] = 1;
 //        }
         fdata.theta = 0;
+//        vector<double> ff(2*L*dim, 0);
+//        for(int i = 0; i < L; i++) {
+//            ff[i*2*dim+4] = 1;
+//        }
         try {
         localopt.optimize(popx, E0);
         } catch (std::exception& e) {
@@ -498,7 +503,7 @@ void phasepoints(Parameter& xi, phase_parameters pparms, queue<Point>& points, /
         try {
         localopt.optimize(popx, E2th);
         } catch (std::exception& e) {
-            printf("nlopt failed!: E0 refine: %d, %d\n", point.i, point.j);
+            printf("nlopt failed!: E2th refine: %d, %d\n", point.i, point.j);
             cout << e.what() << endl;
             E2th = pop2th.champion().f[0];
         }
@@ -969,7 +974,50 @@ int main(int argc, char** argv) {
     //            
 //                return 0;
     
-    //"${OUTPUT_PATH}" 1 1 2e10 2.5e11 1 0 1 51 0.1 0.02 6 10000000 3e11 1
+    
+//            vector<double> f(2*L*dim, 1);
+//            for(int i = 0; i < 2*L*dim; i++) {
+//                f[i] = (i+1)/(2.*L*dim);
+//            }
+////            mt19937 rng2;
+////            uniform_real_distribution<> uni2(-1, 1);
+////            for(int i = 0; i <2*L*dim; i++) {
+////                f[i] = uni2(rng2);
+////            }
+//            vector<double> Uv(L, 1);
+//            for(int i = i; i < L; i++) {
+//                Uv[i] = 1 + 0.1*i/L;
+//            }
+//            double U0 = 1;
+//            vector<double> dUv(L, 0.1);
+//            for(int i = i; i < L; i++) {
+//                dUv[i] = 0.01*(i+1)/L;
+//            }
+//            vector<double> Jv(L, 0.01);
+//            for(int i = i; i < L; i++) {
+//                Jv[i] = 0.01*(i+1)/L;
+//            }
+//            vector<double> grad(2*L*dim);
+//            double en = energy(f.data(), Uv.data(), U0, dUv.data(), Jv.data(), 0.5, 0.1);
+////            cout << "Did energy" << endl;
+////            cout << "E = " << en << endl;
+//        energygrad(f.data(), Uv.data(), U0, dUv.data(), Jv.data(), 0.5, 0.1, grad.data());
+//                int id = 2;
+//                double df = 1e-7;
+//                for(int id = 0; id < 2*L*dim; id++) {
+//                f[id] += df;
+//            double en2 = energy(f.data(), Uv.data(), U0, dUv.data(), Jv.data(), 0.5, 0.1);
+//                cout << ::math(grad[id]) << "\t";//endl;
+//                cout << ::math((en2-en)/df) << "\t";//endl;
+//                cout << ::math((en2-en)/df-grad[id]);// << endl;
+//                cout << endl;
+//                f[id] -= df;
+//                }
+////        cout << "Did gradient" << endl;
+////        cout << "grad = " << ::math(grad) << endl;
+////
+//    return 0;
+    
 
     mt19937 rng;
     uniform_real_distribution<> uni(-1, 1);
@@ -1053,7 +1101,7 @@ int main(int argc, char** argv) {
         rng.seed(seed);
         
         int xiset = 0;
-        double threshold = 0.2;
+        double threshold = 0;
         
         while(true) {
         if (seed > -1) {
